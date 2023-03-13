@@ -3,9 +3,9 @@ export default {
   connection: {
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
-    user: "avetisk",
+    user: "pascal",
     password: process.env.DB_PASSWORD,
-    database: "blog",
+    database: "crm",
   },
   migrations: {
     directory: "./src/db/migrations",
