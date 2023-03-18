@@ -1,8 +1,10 @@
-import PostModel from "../db/models/PostModel.js"
+import PageModel from "../db/models/PageModel.js"
+import PermissionsModel from "../db/models/Permissions.js"
 import auth from "../middlewares/auth.js"
+import checkPermissions from "../middlewares/checkPermissions.js"
 import validate from "../middlewares/validate.js"
 import {
-  boolValidator,
+  // boolValidator,
   contentValidator,
   idValidator,
   limitValidator,
@@ -12,7 +14,7 @@ import {
   titleValidator,
 } from "../validators.js"
 
-const preparePostsRoutes = ({ app }) => {
+const preparePageRoutes = ({ app }) => {
   app.post(
     "/posts",
     auth,
@@ -29,7 +31,7 @@ const preparePostsRoutes = ({ app }) => {
           user: { id: userId },
         },
       } = req.locals
-      const post = await PostModel.query()
+      const post = await PageModel.query()
         .insert({
           title,
           content,
@@ -42,19 +44,20 @@ const preparePostsRoutes = ({ app }) => {
   )
 
   app.get(
-    "/posts",
+    "/pages",
     validate({
       query: {
         limit: limitValidator,
         page: pageValidator,
         orderField: orderFieldValidator(["title", "content"]).default("title"),
         order: orderValidator.default("desc"),
-        isPublished: boolValidator.default(true),
+        // isPublished: boolValidator.default(true),
       },
     }),
+
     async (req, res) => {
       const { limit, page, orderField, order, isPublished } = req.locals.query
-      const query = PostModel.query().modify("paginate", limit, page)
+      const query = PageModel.query().modify("paginate", limit, page)
 
       if (isPublished) {
         query.whereNotNull("publishedAt")
@@ -70,10 +73,10 @@ const preparePostsRoutes = ({ app }) => {
         .clearOrder()
         .count()
       const count = Number.parseInt(countResult.count, 10)
-      const posts = await query.withGraphFetched("author")
+      const pages = await query.withGraphFetched("creator")
 
       res.send({
-        result: posts,
+        result: pages,
         meta: {
           count,
         },
@@ -89,7 +92,7 @@ const preparePostsRoutes = ({ app }) => {
       },
     }),
     async (req, res) => {
-      const post = await PostModel.query().findById(req.params.postId)
+      const post = await PageModel.query().findById(req.params.postId)
 
       if (!post) {
         res.status(404).send({ error: "not found" })
@@ -103,7 +106,7 @@ const preparePostsRoutes = ({ app }) => {
 
   app.patch("/posts/:postId", async (req, res) => {
     const { title, content, published } = req.body
-    const post = await PostModel.query().findById(req.params.postId)
+    const post = await PageModel.query().findById(req.params.postId)
 
     if (!post) {
       res.status(404).send({ error: "not found" })
@@ -111,7 +114,7 @@ const preparePostsRoutes = ({ app }) => {
       return
     }
 
-    const updatedPost = await PostModel.query()
+    const updatedPost = await PageModel.query()
       .update({
         ...(title ? { title } : {}),
         ...(content ? { content } : {}),
@@ -126,7 +129,7 @@ const preparePostsRoutes = ({ app }) => {
   })
 
   app.delete("/posts/:postId", async (req, res) => {
-    const post = await PostModel.query().findById(req.params.postId)
+    const post = await PageModel.query().findById(req.params.postId)
 
     if (!post) {
       res.status(404).send({ error: "not found" })
@@ -134,12 +137,18 @@ const preparePostsRoutes = ({ app }) => {
       return
     }
 
-    await PostModel.query().delete().where({
+    await PageModel.query().delete().where({
       id: req.params.postId,
     })
 
     res.send({ result: post })
   })
+
+  app.get("/pages/test", checkPermissions,async (req, res) => {
+    const perms = await PermissionsModel.query()
+
+    res.send({permissions: perms})
+  })
 }
 
-export default preparePostsRoutes
+export default preparePageRoutes

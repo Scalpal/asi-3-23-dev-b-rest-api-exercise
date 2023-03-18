@@ -8,7 +8,6 @@ export const idValidator = yup.number().integer().min(1)
 
 // posts
 export const titleValidator = yup.string().min(1).max(300)
-
 export const contentValidator = yup.string().min(1)
 
 // users

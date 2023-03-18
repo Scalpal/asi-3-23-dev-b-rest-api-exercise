@@ -21,7 +21,7 @@ const config = {
   },
   security: {
     jwt: {
-      secret: process.env.SECURITY_JWT_SECRET,
+      secret: `${process.env.SECURITY_JWT_SECRET}`,
       options: {
         expiresIn: "2 days",
       },

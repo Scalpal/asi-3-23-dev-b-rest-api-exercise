@@ -1,21 +1,21 @@
 import BaseModel from "./BaseModel.js"
+import RoleModel from "./RoleModel.js"
 
-class UserModel extends BaseModel {
-  static tableName = "users"
+class PermissionsModel extends BaseModel {
+  static tableName = "permissions"
 
   static relationMappings() {
     return {
       role: {
         relation: BaseModel.BelongsToOneRelation,
-        modelClass: UserModel,
+        modelClass: RoleModel,
         join: {
-          from: "users.roleId",
+          from: "permissions.roleId",
           to: "role.id",
         },
-        modify: (query) => query.select("id", "displayName"),
       },
     }
   }
 }
 
-export default UserModel
+export default PermissionsModel
