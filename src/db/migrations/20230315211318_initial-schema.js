@@ -31,6 +31,16 @@ export const up = async (knex) => {
 		table.timestamps(true, true, true)
 		table.enum("status", ["draft", "published"]).notNullable().defaultTo("draft")
 	})
+
+	// await knex.schema.createTable("navigationMenu", (table) => {
+	// 	table.increments("id")
+	// 	table.text("name")
+	// })
+
+	// await knex.schema.createTable("navigationMenuPagesRelation", (table) => {
+	// 	table.integer("navigationMenuId").notNullable().references("id").inTable("navigationMenu")
+	// 	table.integer("pageId").notNullable().references("id").inTable("pages")
+	// }) 
 }
 
 export const down = async (knex) => {
@@ -38,4 +48,5 @@ export const down = async (knex) => {
 	await knex.schema.dropTable("users")
 	await knex.schema.dropTable("permissions")
 	await knex.schema.dropTable("role")
+
 }

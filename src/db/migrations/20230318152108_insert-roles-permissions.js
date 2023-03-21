@@ -14,12 +14,12 @@ export const up = async (knex) => {
   await knex("permissions").insert([
     {
       roleId: 1,
-      permission_key: "user",
+      permission_key: "users",
       permission_value: "RU"
     },
     {
       roleId: 1,
-      permission_key: "page",
+      permission_key: "pages",
       permission_value: "RU"
     },
     {
@@ -29,12 +29,12 @@ export const up = async (knex) => {
     },
     {
       roleId: 2,
-      permission_key: "user",
+      permission_key: "users",
       permission_value: "CRUD"
     },
     {
       roleId: 2,
-      permission_key: "page",
+      permission_key: "pages",
       permission_value: "CRD"
     },
     {
@@ -44,12 +44,12 @@ export const up = async (knex) => {
     },
     {
       roleId: 3,
-      permission_key: "user",
+      permission_key: "users",
       permission_value: "CRUD"
     },
     {
       roleId: 3,
-      permission_key: "page",
+      permission_key: "pages",
       permission_value: "CRD"
     },
     {
@@ -61,6 +61,8 @@ export const up = async (knex) => {
 }
 
 export const down = async (knex) => {
+  await knex("pages").del()
+  await knex("users").del()
   await knex("permissions").del()
   await knex("role").del()
 }

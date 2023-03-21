@@ -19,7 +19,7 @@ class PageModel extends BaseModel {
           from: "pages.creator",
           to: "users.id",
         },
-        modify: (query) => query.select("id", "displayName"),
+        modify: (query) => query.select("id", "creator"),
       },
     }
   }

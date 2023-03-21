@@ -14,19 +14,19 @@ const getPermByMethod = (method) => {
       break
     }
 
-    case "post": {
+    case "POST": {
       perm = "C"
 
       break
     }
       
-    case "patch": {
+    case "PATCH": {
       perm = "U"
 
       break
     }
       
-    case "delete": {
+    case "DELETE": {
       perm = "D"
 
       break
@@ -40,18 +40,19 @@ const checkPermissions = async(req, res, next) => {
   const jwt = req.headers.authorization?.slice(7)
 
   try {
+    console.log("passage par le middleware checkPermissions")
     const { payload } = jsonwebtoken.verify(jwt, config.security.jwt.secret)
     console.log("jwt :", payload)
 
     const user = await UserModel.query()
-      .select("id", "role")
+      .select("id", "roleId")
       .where("id", payload.user.id)
     
     const perms = await PermissionsModel.query()
       .select("permission_key", "permission_value")
-      .where("roleId", user.role)
+      .where("roleId", user[0].roleId)
       .groupBy("permission_key", "permission_value")
-    
+
     const permissions = perms.reduce((acc, { permission_key, permission_value }) => {
       acc[permission_key] = permission_value
 
@@ -62,12 +63,6 @@ const checkPermissions = async(req, res, next) => {
     const ressource = req.url.trim().split("/")[1]
     const permissionNeeded = getPermByMethod(method)
 
-    // console.log("method : ", method)
-    // console.log("ressource :", ressource)
-    // console.log("perms needed :", permissionNeeded)
-    // console.log("ressource checked : ", rolePermissions[ressource])
-    // console.log("authorized ? : ", rolePermissions[ressource].includes(permissionNeeded))
-
     if (!permissions[ressource].includes(permissionNeeded)) {
       throw new InvalidAccessError
     }
@@ -76,27 +71,6 @@ const checkPermissions = async(req, res, next) => {
   } catch (err) {
     console.log(err)
   } 
-
-  {/*try {
-    // const { payload } = jsonwebtoken.verify(jwt, config.security.jwt.secret)
-    // console.log("payload : ", payload)
-    // req.locals.session = payload
-    
-    console.log("req : ", req)
-    // console.log("res : ",res)
-
-    next()
-  } catch (err) {
-    if (err instanceof jsonwebtoken.JsonWebTokenError) {
-      res.status(403).send({ error: "Forbidden" })
-
-      return
-    }
-
-    console.error(err)
-
-    res.status(500).send({ error: "Oops. Something went wrong." })
-  }*/}
 }
 
 export default checkPermissions
