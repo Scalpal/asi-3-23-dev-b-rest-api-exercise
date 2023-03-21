@@ -1,48 +1,56 @@
 import PageModel from "../db/models/PageModel.js"
-import PermissionsModel from "../db/models/Permissions.js"
 import auth from "../middlewares/auth.js"
 import checkPermissions from "../middlewares/checkPermissions.js"
 import validate from "../middlewares/validate.js"
 import {
-  // boolValidator,
   contentValidator,
-  idValidator,
   limitValidator,
   orderFieldValidator,
   orderValidator,
   pageValidator,
   titleValidator,
+  slugValidator,
+  statusValidator
 } from "../validators.js"
 
 const preparePageRoutes = ({ app }) => {
   app.post(
-    "/posts",
+    "/pages/add",
     auth,
+    checkPermissions,
     validate({
       body: {
         title: titleValidator.required(),
         content: contentValidator.required(),
+        slug: slugValidator.required(),
+        status: statusValidator.required(),
       },
     }),
+
     async (req, res) => {
       const {
-        body: { title, content },
+        body: { title, content, slug, status },
         session: {
           user: { id: userId },
         },
       } = req.locals
-      const post = await PageModel.query()
+
+      const page = await PageModel.query()
         .insert({
           title,
           content,
-          userId,
+          slug,
+          usersWhoModified: `[${userId}]`,
+          creator: userId,
+          status,
         })
         .returning("*")
 
-      res.send({ result: post })
+      res.send({ result: page })
     }
   )
 
+  // All pages
   app.get(
     "/pages",
     validate({
@@ -51,29 +59,28 @@ const preparePageRoutes = ({ app }) => {
         page: pageValidator,
         orderField: orderFieldValidator(["title", "content"]).default("title"),
         order: orderValidator.default("desc"),
-        // isPublished: boolValidator.default(true),
       },
     }),
 
     async (req, res) => {
-      const { limit, page, orderField, order, isPublished } = req.locals.query
+      const { limit, page, orderField, order } = req.locals.query
       const query = PageModel.query().modify("paginate", limit, page)
-
-      if (isPublished) {
-        query.whereNotNull("publishedAt")
-      }
 
       if (orderField) {
         query.orderBy(orderField, order)
       }
+
+      const pages = await query
+        .select("*")
+        .where("status", "published")
 
       const [countResult] = await query
         .clone()
         .clearSelect()
         .clearOrder()
         .count()
+
       const count = Number.parseInt(countResult.count, 10)
-      const pages = await query.withGraphFetched("creator")
 
       res.send({
         result: pages,
@@ -84,30 +91,90 @@ const preparePageRoutes = ({ app }) => {
     }
   )
 
+  // Only drafts of logged user
   app.get(
-    "/posts/:postId",
+    "/pages/drafts",
+    auth,
     validate({
-      params: {
-        postId: idValidator.required(),
+      query: {
+        limit: limitValidator,
+        page: pageValidator,
+        orderField: orderFieldValidator(["title", "content"]).default("title"),
+        order: orderValidator.default("desc"),
       },
     }),
-    async (req, res) => {
-      const post = await PageModel.query().findById(req.params.postId)
 
-      if (!post) {
-        res.status(404).send({ error: "not found" })
+    async (req, res) => {
+      console.log("session : ", req.locals.session)
+
+      const { id } = req.locals.session.user 
+      
+      const { limit, page, orderField, order } = req.locals.query
+      const query = PageModel.query().modify("paginate", limit, page)
+
+      if (orderField) {
+        query.orderBy(orderField, order)
+      }
+
+      const pages = await query
+        .select("*")
+        .where("status", "draft")
+        .where("creator", id)
+
+      const [countResult] = await query
+        .clone()
+        .clearSelect()
+        .clearOrder()
+        .count()
+
+      const count = Number.parseInt(countResult.count, 10)
+
+      res.send({
+        result: pages,
+        meta: {
+          count,
+        },
+      })
+    }
+  )
+
+  // Get page with it's slug
+  app.get(
+    "/:slug",
+    auth,
+    async (req, res) => {
+      const page = await PageModel.query()
+        .select("*")
+        .where("slug", req.params.slug)
+
+      if (page[0].status === "draft") {
+        res.status(404).send({ error: "Page not found" })
 
         return
       }
 
-      res.send({ result: post })
+      res.send({ result: page })
     }
   )
 
-  app.patch("/posts/:postId", async (req, res) => {
-    const { title, content, published } = req.body
-    const post = await PageModel.query().findById(req.params.postId)
+  app.patch(
+    "/pages/:pageId", 
+    auth, 
+    validate({
+      body: {
+        title: titleValidator.required(),
+        content: contentValidator.required(),
+        status: statusValidator.required(),
+      }
+    }),
+    async (req, res) => {
+    const { title, content, status } = req.body
+    const { id } = req.locals.session.user
 
+    const post = await PageModel.query().findById(req.params.pageId)
+
+    console.log("userWhoModified : ", post.usersWhoModified)
+    
     if (!post) {
       res.status(404).send({ error: "not found" })
 
@@ -118,36 +185,35 @@ const preparePageRoutes = ({ app }) => {
       .update({
         ...(title ? { title } : {}),
         ...(content ? { content } : {}),
-        ...(published ? { published } : {}),
+        usersWhoModified : (!post.usersWhoModified.includes(id) ? JSON.stringify([...post.usersWhoModified, id]) : JSON.stringify(post.usersWhoModified)),
+        ...(status ? { status } : {}),
       })
       .where({
-        id: req.params.postId,
+        id: req.params.pageId,
       })
       .returning("*")
 
     res.send({ result: updatedPost })
   })
 
-  app.delete("/posts/:postId", async (req, res) => {
-    const post = await PageModel.query().findById(req.params.postId)
+  app.delete(
+    "/pages/:pageId",
+    auth,
+    checkPermissions,
+    async (req, res) => {
+    const post = await PageModel.query().findById(req.params.pageId)
 
     if (!post) {
-      res.status(404).send({ error: "not found" })
+      res.status(404).send({ error: "Not found" })
 
       return
     }
 
     await PageModel.query().delete().where({
-      id: req.params.postId,
+      id: req.params.pageId,
     })
 
-    res.send({ result: post })
-  })
-
-  app.get("/pages/test", checkPermissions,async (req, res) => {
-    const perms = await PermissionsModel.query()
-
-    res.send({permissions: perms})
+    res.send({ result: post, message: "Successfully deleted !" })
   })
 }
 

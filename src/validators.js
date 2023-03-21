@@ -6,9 +6,11 @@ export const stringValidator = yup.string()
 
 export const idValidator = yup.number().integer().min(1)
 
-// posts
+// pages
 export const titleValidator = yup.string().min(1).max(300)
 export const contentValidator = yup.string().min(1)
+export const slugValidator = yup.string().min(1)
+export const statusValidator = yup.string().lowercase().oneOf(["draft", "published"])
 
 // users
 export const lastNameValidator = yup.string().min(1)
