@@ -98,4 +98,10 @@ export const seed = async (knex) => {
     { name: "Main menu" },
     { name: "Drawer menu" }
   ])
+
+  await knex("navigationMenuPagesRelation").insert([
+    { navigationMenuId: 1, pageId: 1 },
+    { navigationMenuId: 1, pageId: 2 },
+    { navigationMenuId: 1, pageId: 3 },
+  ])
 }
