@@ -2,8 +2,7 @@ import * as yup from "yup"
 
 // generic
 export const boolValidator = yup.bool()
-export const stringValidator = yup.string()
-
+export const stringValidator = yup.string().min(1)
 export const idValidator = yup.number().integer().min(1)
 
 // pages
@@ -18,6 +17,9 @@ export const firstNameValidator = yup.string().min(1)
 export const emailValidator = yup.string().email()
 export const passwordValidator = yup.string().min(8)
 export const roleValidator = yup.number()
+
+// navigationMenu
+// export const parentIdValidator = yup.number()
 
 // collection (pagination, order, etc.)
 export const limitValidator = yup.number().integer().min(1).max(100).default(5)

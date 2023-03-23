@@ -32,21 +32,24 @@ export const up = async (knex) => {
 		table.enum("status", ["draft", "published"]).notNullable().defaultTo("draft")
 	})
 
-	// await knex.schema.createTable("navigationMenu", (table) => {
-	// 	table.increments("id")
-	// 	table.text("name")
-	// })
+	await knex.schema.createTable("navigationMenu", (table) => {
+		table.increments("id")
+		table.text("name")
+		table.integer("parentId").references("id").inTable("navigationMenu").defaultTo(null)
+	})
 
-	// await knex.schema.createTable("navigationMenuPagesRelation", (table) => {
-	// 	table.integer("navigationMenuId").notNullable().references("id").inTable("navigationMenu")
-	// 	table.integer("pageId").notNullable().references("id").inTable("pages")
-	// }) 
+	await knex.schema.createTable("navigationMenuPagesRelation", (table) => {
+		table.integer("navigationMenuId").notNullable().references("id").inTable("navigationMenu")
+		table.integer("pageId").notNullable().references("id").inTable("pages")
+		table.primary(["navigationMenuId", "pageId"])
+	}) 
 }
 
 export const down = async (knex) => {
+	await knex.schema.dropTable("navigationMenuPagesRelation") 
+	await knex.schema.dropTable("navigationMenu")
 	await knex.schema.dropTable("pages")
 	await knex.schema.dropTable("users")
 	await knex.schema.dropTable("permissions")
 	await knex.schema.dropTable("role")
-
 }

@@ -40,9 +40,7 @@ const checkPermissions = async(req, res, next) => {
   const jwt = req.headers.authorization?.slice(7)
 
   try {
-    console.log("passage par le middleware checkPermissions")
     const { payload } = jsonwebtoken.verify(jwt, config.security.jwt.secret)
-    console.log("jwt :", payload)
 
     const user = await UserModel.query()
       .select("id", "roleId")

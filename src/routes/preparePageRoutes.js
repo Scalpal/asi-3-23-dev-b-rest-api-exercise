@@ -139,23 +139,23 @@ const preparePageRoutes = ({ app }) => {
   )
 
   // Get page with it's slug
-  app.get(
-    "/:slug",
-    auth,
-    async (req, res) => {
-      const page = await PageModel.query()
-        .select("*")
-        .where("slug", req.params.slug)
+  // app.get(
+  //   "/:slug",
+  //   auth,
+  //   async (req, res) => {
+  //     const page = await PageModel.query()
+  //       .select("*")
+  //       .where("slug", req.params.slug)
 
-      if (page[0].status === "draft") {
-        res.status(404).send({ error: "Page not found" })
+  //     if (page[0].status === "draft") {
+  //       res.status(404).send({ error: "Page not found" })
 
-        return
-      }
+  //       return
+  //     }
 
-      res.send({ result: page })
-    }
-  )
+  //     res.send({ result: page })
+  //   }
+  // )
 
   app.patch(
     "/pages/:pageId", 
