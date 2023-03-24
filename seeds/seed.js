@@ -3,6 +3,7 @@ import hashPassword from "../src/db/hashPassword.js"
 // npx knex seed:run
 
 export const seed = async (knex) => {
+  await knex("navigationMenuChildRelation").del()
   await knex("navigationMenuPagesRelation").del()
   await knex("navigationMenu").del()
   await knex("permissions").del()
@@ -94,14 +95,23 @@ export const seed = async (knex) => {
     { title: "Contact", content: "You can reach us at contact@example.com.", slug: "contact", creator: admin.id, usersWhoModified: [], status: "published" }
   ])
 
+  // Inserts seed entries for navigationMenu table
   await knex("navigationMenu").insert([
     { name: "Main menu" },
-    { name: "Drawer menu" }
+    { name: "Secondary menu" },
+    { name: "Drawer menu" },
+    { name: "Burger menu" }
   ])
 
+  // Inserts seed entries for navigationMenuPagesRelation 
   await knex("navigationMenuPagesRelation").insert([
     { navigationMenuId: 1, pageId: 1 },
     { navigationMenuId: 1, pageId: 2 },
     { navigationMenuId: 1, pageId: 3 },
+  ])
+
+  await knex("navigationMenuChildRelation").insert([
+    { navigationMenuId: 1, navigationMenuChildId: 2 },
+    { navigationMenuId: 3, navigationMenuChildId: 4 }
   ])
 }

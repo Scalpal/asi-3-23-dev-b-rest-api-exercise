@@ -1,3 +1,4 @@
+import NavigationMenuPagesRelationModel from "../db/models/NavigationMenuPagesRelationModel.js"
 import PageModel from "../db/models/PageModel.js"
 import auth from "../middlewares/auth.js"
 import checkPermissions from "../middlewares/checkPermissions.js"
@@ -208,6 +209,10 @@ const preparePageRoutes = ({ app }) => {
 
       return
     }
+      
+    await NavigationMenuPagesRelationModel.query().delete().where({
+      pageId: req.params.pageId
+    })
 
     await PageModel.query().delete().where({
       id: req.params.pageId,

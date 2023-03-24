@@ -35,7 +35,6 @@ export const up = async (knex) => {
 	await knex.schema.createTable("navigationMenu", (table) => {
 		table.increments("id")
 		table.text("name")
-		table.integer("parentId").references("id").inTable("navigationMenu").defaultTo(null)
 	})
 
 	await knex.schema.createTable("navigationMenuPagesRelation", (table) => {
@@ -43,9 +42,16 @@ export const up = async (knex) => {
 		table.integer("pageId").notNullable().references("id").inTable("pages")
 		table.primary(["navigationMenuId", "pageId"])
 	}) 
+
+	await knex.schema.createTable("navigationMenuChildRelation", (table) => {
+		table.integer("navigationMenuId").notNullable().references("id").inTable("navigationMenu")
+		table.integer("navigationMenuChildId").notNullable().references("id").inTable("navigationMenu")
+		table.primary(["navigationMenuId", "navigationMenuChildId"])
+	}) 
 }
 
 export const down = async (knex) => {
+	await knex.schema.dropTable("navigationMenuChildRelation") 
 	await knex.schema.dropTable("navigationMenuPagesRelation") 
 	await knex.schema.dropTable("navigationMenu")
 	await knex.schema.dropTable("pages")
