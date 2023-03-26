@@ -57,29 +57,43 @@ export const getAllMenuChilds = async (navMenuId) => {
 
 
     // Get child menus related to the current navigation menu
+    const childrenMenus = []
     const navigationMenuChilds = await NavigationMenuChildRelationModel.query()
       .select("*")
       .where("navigationMenuId", menu.id)
         
-    if (navigationMenuChilds) {
-      const childrenMenus = []
+    
+    // Loop on child menus of the current child navigation menu
+    for (let i = 0; i < navigationMenuChilds.length; i++) {
+      const { navigationMenuChildId } = navigationMenuChilds[i]
+      const childMenu = await NavigationMenuModel.query().findById(navigationMenuChildId)
 
-      // Loop on child menus of the current child navigation menu
-      for (let i = 0; i < navigationMenuChilds.length; i++) {
-        const { navigationMenuChildId } = navigationMenuChilds[i]
-        const childMenu = await NavigationMenuModel.query().findById(navigationMenuChildId)
+      // Get child pages related to the current child navigation menu
+      const navigationMenuPagesRelations = await NavigationMenuPagesRelationModel.query()
+        .select("*")
+        .where("navigationMenuId", childMenu.id)
+          
+      if (navigationMenuPagesRelations) {
+        const childrenPages = []
 
-        // If the current navigation menu has child navigation menu,
-        // we recursively get the child's child menus and page again
-        childMenu.childrenMenus = await getAllMenuChilds(childMenu.id)
+        for (let i = 0; i < navigationMenuPagesRelations.length; i++) {
+          const { pageId } = navigationMenuPagesRelations[i]
+          const page = await PageModel.query().findById(pageId)
+          childrenPages.push(page)
+        }
 
-        childrenMenus.push(childMenu)
+        childMenu.childrenPages = childrenPages
       }
 
-      menu.childrenMenus = childrenMenus
+      // If the current navigation menu has child navigation menu,
+      // we recursively get the child's child menus and pages again
+      childMenu.childrenMenus = await getAllMenuChilds(childMenu.id)
+
+      childrenMenus.push(childMenu)
     }
+    menu.childrenMenus = childrenMenus
     
-    // menu : { id: x, name: menuName, childrenPages: [], childrenMenus: [] }
+    // menu: { id: x, name: menuName, childrenPages: [], childrenMenus: [] }
     finalResult.push(menu)
   }  
 
