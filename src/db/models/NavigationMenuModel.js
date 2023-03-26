@@ -39,10 +39,10 @@ export const getAllMenuChilds = async (navMenuId) => {
     const { navigationMenuChildId } = navigationMenuChildRelations[i]
     const menu = await NavigationMenuModel.query().findById(navigationMenuChildId)
 
-    // Get child pages related to the current navigation menu
+    // Get child pages related to the current CHILD navigation menu
     const navigationMenuPagesRelations = await NavigationMenuPagesRelationModel.query()
       .select("*")
-      .where("navigationMenuId", navigationMenuChildId)
+      .where("navigationMenuId", menu.id)
         
     if (navigationMenuPagesRelations) {
       const childrenPages = []
