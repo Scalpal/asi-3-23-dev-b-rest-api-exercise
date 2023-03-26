@@ -15,42 +15,6 @@ import {
 } from "../validators.js"
 
 const preparePageRoutes = ({ app }) => {
-  app.post(
-    "/pages/add",
-    auth,
-    checkPermissions,
-    validate({
-      body: {
-        title: titleValidator.required(),
-        content: contentValidator.required(),
-        slug: slugValidator.required(),
-        status: statusValidator.required(),
-      },
-    }),
-
-    async (req, res) => {
-      const {
-        body: { title, content, slug, status },
-        session: {
-          user: { id: userId },
-        },
-      } = req.locals
-
-      const page = await PageModel.query()
-        .insert({
-          title,
-          content,
-          slug,
-          usersWhoModified: `[${userId}]`,
-          creator: userId,
-          status,
-        })
-        .returning("*")
-
-      res.send({ result: page })
-    }
-  )
-
   // All pages
   app.get(
     "/pages",
@@ -106,8 +70,6 @@ const preparePageRoutes = ({ app }) => {
     }),
 
     async (req, res) => {
-      console.log("session : ", req.locals.session)
-
       const { id } = req.locals.session.user 
       
       const { limit, page, orderField, order } = req.locals.query
@@ -139,6 +101,42 @@ const preparePageRoutes = ({ app }) => {
     }
   )
 
+  app.post(
+    "/pages/add",
+    auth,
+    checkPermissions,
+    validate({
+      body: {
+        title: titleValidator.required(),
+        content: contentValidator.required(),
+        slug: slugValidator.required(),
+        status: statusValidator.required(),
+      },
+    }),
+
+    async (req, res) => {
+      const {
+        body: { title, content, slug, status },
+        session: {
+          user: { id: userId },
+        },
+      } = req.locals
+
+      const page = await PageModel.query()
+        .insert({
+          title,
+          content,
+          slug,
+          usersWhoModified: `[${userId}]`,
+          creator: userId,
+          status,
+        })
+        .returning("*")
+
+      res.send({ result: page })
+    }
+  )
+
   // Get page with it's slug
   // app.get(
   //   "/:slug",
@@ -161,6 +159,7 @@ const preparePageRoutes = ({ app }) => {
   app.patch(
     "/pages/:pageId", 
     auth, 
+    checkPermissions,
     validate({
       body: {
         title: titleValidator.required(),
