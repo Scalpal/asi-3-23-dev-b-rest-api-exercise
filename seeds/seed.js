@@ -105,23 +105,24 @@ export const seed = async (knex) => {
 
   // Inserts seed entries for navigationMenu table
   await knex("navigationMenu").insert([
-    { name: "Main menu" },
-    { name: "Secondary menu" },
-    { name: "Third menu" },
-    { name: "Drawer menu" },
-    { name: "Burger menu" }
+    { name: "Menu 1" },
+    { name: "Menu 2" },
+    { name: "Menu 3" },
+    { name: "Menu 4" },
+    { name: "Menu 5" },
+    { name: "Menu 6" },
   ])
 
   // Inserts seed entries for navigationMenuPagesRelation 
   await knex("navigationMenuPagesRelation").insert([
     { navigationMenuId: 1, pageId: 1 },
     { navigationMenuId: 2, pageId: 2 },
-    { navigationMenuId: 4, pageId: 5 },
+    { navigationMenuId: 3, pageId: 3 },
   ])
 
   await knex("navigationMenuChildRelation").insert([
     { navigationMenuId: 1, navigationMenuChildId: 2 },
     { navigationMenuId: 2, navigationMenuChildId: 3 },
-    { navigationMenuId: 4, navigationMenuChildId: 5 }
+    { navigationMenuId: 3, navigationMenuChildId: 4 }
   ])
 }

@@ -30,6 +30,7 @@ class NavigationMenuModel extends BaseModel {
 export const getAllMenuChilds = async (navMenuId) => {
   const finalResult = []
 
+  // Get child menus related to the current navigation menu (with id in param)
   const navigationMenuChildRelations = await NavigationMenuChildRelationModel.query()
     .select("*")
     .where("navigationMenuId", navMenuId)
@@ -55,8 +56,7 @@ export const getAllMenuChilds = async (navMenuId) => {
       menu.childrenPages = childrenPages
     }
 
-
-    // Get child menus related to the current navigation menu
+    // Get child menus related to the current CHILD navigation menu
     const childrenMenus = []
     const navigationMenuChilds = await NavigationMenuChildRelationModel.query()
       .select("*")
@@ -85,7 +85,7 @@ export const getAllMenuChilds = async (navMenuId) => {
         childMenu.childrenPages = childrenPages
       }
 
-      // If the current navigation menu has child navigation menu,
+      // If the current child navigation menu has child navigation menu too,
       // we recursively get the child's child menus and pages again
       childMenu.childrenMenus = await getAllMenuChilds(childMenu.id)
 
