@@ -8,7 +8,6 @@ const exclusiveAdminRoute = async (req, res, next) => {
   try {
     const { id } = req.locals.session.user
     const connectedUser = await UserModel.query().findById(id)
-    // console.log("connectedUser :", connectedUser)
 
     if (!connectedUser) {
       res.status(404).send({ error: "Not found" })

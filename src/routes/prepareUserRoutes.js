@@ -195,7 +195,6 @@ const prepareUserRoutes = ({ app, db }) => {
     }
   )
 
-  // manque delete de toutes les pages qu'il a faite
   app.delete(
     "/users/:userId",
     auth,

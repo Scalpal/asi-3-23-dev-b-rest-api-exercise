@@ -18,7 +18,7 @@ class UserModel extends BaseModel {
           from: "users.roleId",
           to: "role.id",
         },
-        modify: (query) => query.select("id", "displayName"),
+        modify: (query) => query.select("id", "firstName"),
       },
     }
   }

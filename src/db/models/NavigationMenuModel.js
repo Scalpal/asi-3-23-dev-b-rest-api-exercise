@@ -3,7 +3,31 @@ import NavigationMenuChildRelationModel from "./NavigationMenuChildRelationModel
 import NavigationMenuPagesRelationModel from "./NavigationMenuPagesRelationModel.js"
 import PageModel from "./PageModel.js"
 
-export const getChildMenuPages = async (navMenuId) => {
+class NavigationMenuModel extends BaseModel {
+  static tableName = "navigationMenu"
+
+  static modifiers = {
+    paginate: (query, limit, page) => {
+      return query.limit(limit).offset((page - 1) * limit)
+    },
+  }
+
+  static relationMappings() {
+    return {
+      creatorId: {
+        relation: BaseModel.BelongsToOneRelation,
+        modelClass: NavigationMenuModel,
+        join: {
+          from: "navigationMenu.parentId",
+          to: "navigationMenu.id",
+        },
+      },
+      modify: (query) => query.select("id", "name"),
+    }
+  }
+}
+
+export const getAllMenuChilds = async (navMenuId) => {
   const finalResult = []
 
   const navigationMenuChildRelations = await NavigationMenuChildRelationModel.query()
@@ -47,7 +71,7 @@ export const getChildMenuPages = async (navMenuId) => {
 
         // If the current navigation menu has child navigation menu,
         // we recursively get the child's child menus and page again
-        childMenu.childrenMenus = await getChildMenuPages(childMenu.id)
+        childMenu.childrenMenus = await getAllMenuChilds(childMenu.id)
 
         childrenMenus.push(childMenu)
       }
@@ -60,29 +84,6 @@ export const getChildMenuPages = async (navMenuId) => {
   }  
 
   return finalResult
-}
-
-class NavigationMenuModel extends BaseModel {
-  static tableName = "navigationMenu"
-
-  static modifiers = {
-    paginate: (query, limit, page) => {
-      return query.limit(limit).offset((page - 1) * limit)
-    },
-  }
-
-  static relationMappings() {
-    return {
-      creatorId: {
-        relation: BaseModel.BelongsToOneRelation,
-        modelClass: NavigationMenuModel,
-        join: {
-          from: "navigationMenu.parentId",
-          to: "navigationMenu.id",
-        },
-      },
-    }
-  }
 }
 
 export default NavigationMenuModel

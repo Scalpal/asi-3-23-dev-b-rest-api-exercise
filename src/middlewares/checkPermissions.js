@@ -57,8 +57,6 @@ const checkPermissions = async(req, res, next) => {
       return acc
     }, {})
 
-    console.log(permissions)
-
     const method = req.method
     const ressourceNoSlashes = req.url.trim().split("/")[1]
     const [ressource] = ressourceNoSlashes.split("?") // ressource completely sanitized from slashes and query params

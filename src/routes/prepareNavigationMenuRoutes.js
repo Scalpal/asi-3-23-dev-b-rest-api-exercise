@@ -1,30 +1,79 @@
 import NavigationMenuChildRelationModel from "../db/models/NavigationMenuChildRelationModel.js"
-import NavigationMenuModel, { getChildMenuPages } from "../db/models/NavigationMenuModel.js"
+import NavigationMenuModel, { getAllMenuChilds } from "../db/models/NavigationMenuModel.js"
 import NavigationMenuPagesRelationModel from "../db/models/NavigationMenuPagesRelationModel.js"
 import PageModel from "../db/models/PageModel.js"
 import auth from "../middlewares/auth.js"
 import checkPermissions from "../middlewares/checkPermissions.js"
 import validate from "../middlewares/validate.js"
 import {
+  limitValidator,
+  orderFieldValidator,
+  orderValidator,
+  pageValidator,
   stringValidator
 } from "../validators.js"
 
 
 const prepareNavigationMenuRoutes = ({ app }) => {
-  app.get("/navigationMenu", async (req, res) => {
-    const navigationMenus = await NavigationMenuModel.query()
-      .select("*")
-    
-      const [countResult] = await NavigationMenuModel.query()
+  app.get(
+    "/navigationMenu",
+    validate({
+      query: {
+        limit: limitValidator.default(5),
+        page: pageValidator,
+        orderField: orderFieldValidator(["id","name"]).default("id"),
+        order: orderValidator.default("asc"),
+      },
+    }),
+    async (req, res) => {
+      const { limit, page, orderField, order } = req.locals.query
+      const query = PageModel.query().modify("paginate", limit, page)
+
+      if (orderField) {
+        query.orderBy(orderField, order)
+      }
+
+      const finalResult = []
+      const navigationMenusQuery =  NavigationMenuModel.query().select("*")
+      const navigationMenus = await navigationMenusQuery
+      
+      for (let i = 0; i < navigationMenus.length; i++) {
+        const menu = {}
+        const { id, name } = navigationMenus[i]
+        menu.id = id
+        menu.name = name
+        
+        // Get child pages of the navigation menu
+        const navigationMenuPagesRelations = await NavigationMenuPagesRelationModel.query()
+          .select("*")
+          .where("navigationMenuId", id)
+            
+        if (navigationMenuPagesRelations) {
+          const childrenPages = []
+
+          for (let i = 0; i < navigationMenuPagesRelations.length; i++) {
+            const elt = navigationMenuPagesRelations[i]
+            const page = await PageModel.query("").findById(elt.pageId)
+            childrenPages.push(page)
+          }
+
+          menu.childrenPages = childrenPages
+        }
+
+        menu.childrenMenus = await getAllMenuChilds(id)    
+        finalResult.push(menu)
+      }
+
+      const countQuery = await navigationMenusQuery
         .clone()
-        .clearSelect()
-        .clearOrder()
+        .groupBy("id")
         .count()
 
-      const count = Number.parseInt(countResult.count, 10)
+      const count = countQuery.reduce((acc, { count }) => acc + Number.parseInt(count), 0)
 
-    res.send({ result: navigationMenus, meta: count })
-  })
+      res.send({ result: finalResult, meta: count })
+    }
+  )
 
   app.get("/navigationMenu/:navigationMenuId", async (req, res) => {
     const result = {}
@@ -51,20 +100,9 @@ const prepareNavigationMenuRoutes = ({ app }) => {
       result.childrenPages = childrenPages
     }
 
-    result.childrenMenus = await getChildMenuPages(req.params.navigationMenuId)
+    result.childrenMenus = await getAllMenuChilds(req.params.navigationMenuId)
 
     res.send({ result: result })
-
-    
-    // const [countResult] = await NavigationMenuModel.query()
-    //   .clone()
-    //   // .clearSelect()
-    //   // .clearOrder()
-    //   .count()
-
-    // const count = Number.parseInt(countResult.count, 10)
-
-    // res.send({ result: r, meta: count })
   })
 
 
@@ -113,8 +151,6 @@ const prepareNavigationMenuRoutes = ({ app }) => {
         .where("navigationMenuId", navigationMenuId)
         .where("pageId", pageId)
       
-      console.log(checkNavPageRelationExist)
-      
       if (checkNavPageRelationExist.length > 0) {
         res.status(401).send({ error: "Already exists" })
 
@@ -154,9 +190,7 @@ const prepareNavigationMenuRoutes = ({ app }) => {
         .select("*")
         .where("navigationMenuId", navigationMenuId)
         .where("navigationMenuChildId", navigationMenuChildId)
-      
-      console.log("checkNavPageRelationExist : ", checkNavPageRelationExist)
-      
+            
       if (checkNavPageRelationExist.length > 0) {
         res.status(422).send({ error: "Already exists" })
 

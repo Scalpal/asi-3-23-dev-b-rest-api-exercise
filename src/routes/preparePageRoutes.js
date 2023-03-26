@@ -20,10 +20,10 @@ const preparePageRoutes = ({ app }) => {
     "/pages",
     validate({
       query: {
-        limit: limitValidator,
+        limit: limitValidator.default(10),
         page: pageValidator,
-        orderField: orderFieldValidator(["title", "content"]).default("title"),
-        order: orderValidator.default("desc"),
+        orderField: orderFieldValidator(["id","title", "content"]).default("id"),
+        order: orderValidator.default("asc"),
       },
     }),
 
@@ -35,17 +35,18 @@ const preparePageRoutes = ({ app }) => {
         query.orderBy(orderField, order)
       }
 
-      const pages = await query
+      const pagesQuery = query
         .select("*")
         .where("status", "published")
+      
+      const pages = await pagesQuery
 
-      const [countResult] = await query
+      const countQuery = await pagesQuery
         .clone()
-        .clearSelect()
-        .clearOrder()
+        .groupBy("id")
         .count()
 
-      const count = Number.parseInt(countResult.count, 10)
+      const count = countQuery.reduce((acc, { count }) => acc + Number.parseInt(count), 0)
 
       res.send({
         result: pages,
@@ -62,10 +63,10 @@ const preparePageRoutes = ({ app }) => {
     auth,
     validate({
       query: {
-        limit: limitValidator,
+        limit: limitValidator.default(1),
         page: pageValidator,
-        orderField: orderFieldValidator(["title", "content"]).default("title"),
-        order: orderValidator.default("desc"),
+        orderField: orderFieldValidator(["id" ,"title", "content"]).default("id"),
+        order: orderValidator.default("asc"),
       },
     }),
 
@@ -79,18 +80,18 @@ const preparePageRoutes = ({ app }) => {
         query.orderBy(orderField, order)
       }
 
-      const pages = await query
+      const pagesQuery = query
         .select("*")
         .where("status", "draft")
         .where("creator", id)
+      const pages = await pagesQuery
 
-      const [countResult] = await query
+      const countQuery = await query
         .clone()
-        .clearSelect()
-        .clearOrder()
+        .groupBy("id")
         .count()
 
-      const count = Number.parseInt(countResult.count, 10)
+      const count = countQuery.reduce((acc, { count }) => acc + Number.parseInt(count), 0)
 
       res.send({
         result: pages,
@@ -137,25 +138,6 @@ const preparePageRoutes = ({ app }) => {
     }
   )
 
-  // Get page with it's slug
-  // app.get(
-  //   "/:slug",
-  //   auth,
-  //   async (req, res) => {
-  //     const page = await PageModel.query()
-  //       .select("*")
-  //       .where("slug", req.params.slug)
-
-  //     if (page[0].status === "draft") {
-  //       res.status(404).send({ error: "Page not found" })
-
-  //       return
-  //     }
-
-  //     res.send({ result: page })
-  //   }
-  // )
-
   app.patch(
     "/pages/:pageId", 
     auth, 
@@ -172,8 +154,6 @@ const preparePageRoutes = ({ app }) => {
     const { id } = req.locals.session.user
 
     const post = await PageModel.query().findById(req.params.pageId)
-
-    console.log("userWhoModified : ", post.usersWhoModified)
     
     if (!post) {
       res.status(404).send({ error: "not found" })

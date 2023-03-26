@@ -22,7 +22,7 @@ export const roleValidator = yup.number()
 // export const parentIdValidator = yup.number()
 
 // collection (pagination, order, etc.)
-export const limitValidator = yup.number().integer().min(1).max(100).default(5)
+export const limitValidator = yup.number().integer().min(1).max(100)
 
 export const pageValidator = yup.number().integer().min(1).default(1)
 
