@@ -1,4 +1,66 @@
 import BaseModel from "./BaseModel.js"
+import NavigationMenuChildRelationModel from "./NavigationMenuChildRelationModel.js"
+import NavigationMenuPagesRelationModel from "./NavigationMenuPagesRelationModel.js"
+import PageModel from "./PageModel.js"
+
+export const getChildMenuPages = async (navMenuId) => {
+  const finalResult = []
+
+  const navigationMenuChildRelations = await NavigationMenuChildRelationModel.query()
+    .select("*")
+    .where("navigationMenuId", navMenuId)
+  
+  for (let i = 0; i < navigationMenuChildRelations.length ; i++) {
+    const { navigationMenuChildId } = navigationMenuChildRelations[i]
+    const menu = await NavigationMenuModel.query().findById(navigationMenuChildId)
+
+    // Get child pages related to the current navigation menu
+    const navigationMenuPagesRelations = await NavigationMenuPagesRelationModel.query()
+      .select("*")
+      .where("navigationMenuId", navigationMenuChildId)
+        
+    if (navigationMenuPagesRelations) {
+      const childrenPages = []
+
+      for (let i = 0; i < navigationMenuPagesRelations.length; i++) {
+        const { pageId } = navigationMenuPagesRelations[i]
+        const page = await PageModel.query().findById(pageId)
+        childrenPages.push(page)
+      }
+
+      menu.childrenPages = childrenPages
+    }
+
+
+    // Get child menus related to the current navigation menu
+    const navigationMenuChilds = await NavigationMenuChildRelationModel.query()
+      .select("*")
+      .where("navigationMenuId", menu.id)
+        
+    if (navigationMenuChilds) {
+      const childrenMenus = []
+
+      // Loop on child menus of the current child navigation menu
+      for (let i = 0; i < navigationMenuChilds.length; i++) {
+        const { navigationMenuChildId } = navigationMenuChilds[i]
+        const childMenu = await NavigationMenuModel.query().findById(navigationMenuChildId)
+
+        // If the current navigation menu has child navigation menu,
+        // we recursively get the child's child menus and page again
+        childMenu.childrenMenus = await getChildMenuPages(childMenu.id)
+
+        childrenMenus.push(childMenu)
+      }
+
+      menu.childrenMenus = childrenMenus
+    }
+    
+    // menu : { id: x, name: menuName, childrenPages: [], childrenMenus: [] }
+    finalResult.push(menu)
+  }  
+
+  return finalResult
+}
 
 class NavigationMenuModel extends BaseModel {
   static tableName = "navigationMenu"

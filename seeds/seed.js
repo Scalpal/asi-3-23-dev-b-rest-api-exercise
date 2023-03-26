@@ -86,19 +86,28 @@ export const seed = async (knex) => {
   ])
 
   // Get the id of the users
-  const [admin] = await knex("users").select("id").where("roleId", 2)
+  const [user, admin, manager] = await knex("users").select("id")
 
   // Inserts seed entries for pages table
   await knex("pages").insert([
-    { title: "Welcome to my website", content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.", slug: "welcome", creator: admin.id, usersWhoModified: [], status: "published" },
-    { title: "About us", content: "We are a team of passionate developers.", slug: "about-us", creator: admin.id, usersWhoModified: [], status: "published" },
-    { title: "Contact", content: "You can reach us at contact@example.com.", slug: "contact", creator: admin.id, usersWhoModified: [], status: "published" }
+    { title: "Welcome to my website", content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.", slug: "welcome", creator: admin.id, usersWhoModified: "[]", status: "published" },
+    { title: "About us", content: "We are a team of passionate developers.", slug: "about-us", creator: admin.id, usersWhoModified: "[]", status: "published" },
+    { title: "Contact", content: "You can reach us at contact@example.com.", slug: "contact", creator: manager.id, usersWhoModified: "[]", status: "published" },
+    { title: "page4", content: "You can reach us at page4@example.com.", slug: "page4", creator: admin.id, usersWhoModified: "[]", status: "published" },
+    { title: "page5", content: "You can reach us at page5@example.com.", slug: "page5", creator: admin.id, usersWhoModified: "[]", status: "published" },
+    { title: "page6", content: "You can reach us at page6@example.com.", slug: "page6", creator: admin.id, usersWhoModified: "[]", status: "draft" },
+    { title: "page7", content: "You can reach us at page7@example.com.", slug: "page7", creator: admin.id, usersWhoModified: "[]", status: "published" },
+    { title: "page8", content: "You can reach us at page8@example.com.", slug: "page8", creator: manager.id, usersWhoModified: "[]", status: "published" },
+    { title: "page9", content: "You can reach us at page9@example.com.", slug: "page9", creator: manager.id, usersWhoModified: "[]", status: "published" },
+    { title: "page10", content: "You can reach us at page10@example.com.", slug: "page10", creator: manager.id, usersWhoModified: "[]", status: "published" },
+    { title: "page11", content: "You can reach us at page11@example.com.", slug: "page11", creator: manager.id, usersWhoModified: "[]", status: "published" }
   ])
 
   // Inserts seed entries for navigationMenu table
   await knex("navigationMenu").insert([
     { name: "Main menu" },
     { name: "Secondary menu" },
+    { name: "Third menu" },
     { name: "Drawer menu" },
     { name: "Burger menu" }
   ])
@@ -106,12 +115,13 @@ export const seed = async (knex) => {
   // Inserts seed entries for navigationMenuPagesRelation 
   await knex("navigationMenuPagesRelation").insert([
     { navigationMenuId: 1, pageId: 1 },
-    { navigationMenuId: 1, pageId: 2 },
-    { navigationMenuId: 1, pageId: 3 },
+    { navigationMenuId: 2, pageId: 2 },
+    { navigationMenuId: 4, pageId: 5 },
   ])
 
   await knex("navigationMenuChildRelation").insert([
     { navigationMenuId: 1, navigationMenuChildId: 2 },
-    { navigationMenuId: 3, navigationMenuChildId: 4 }
+    { navigationMenuId: 2, navigationMenuChildId: 3 },
+    { navigationMenuId: 4, navigationMenuChildId: 5 }
   ])
 }
